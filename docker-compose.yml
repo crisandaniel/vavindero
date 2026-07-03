@@ -26,6 +26,17 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - wp_uploads:/var/www/html/wp-content/uploads
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.app_http.entryPoints=http
+      - traefik.http.routers.app_http.middlewares=redirect-to-https
+      - traefik.http.routers.app_http.rule=HostRegexp(`^.+\.vavinde\.ro$`) || Host(`vavinde.ro`)
+      - traefik.http.routers.app_https.entryPoints=https
+      - traefik.http.routers.app_https.rule=HostRegexp(`^.+\.vavinde\.ro$`) || Host(`vavinde.ro`)
+      - traefik.http.routers.app_https.service=app_service
+      - traefik.http.routers.app_https.tls.certresolver=letsencrypt
+      - traefik.http.routers.app_https.tls=true
+      - traefik.http.services.app_service.loadbalancer.server.port=80
 
   phpmyadmin:
     image: phpmyadmin:latest
