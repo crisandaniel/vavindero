@@ -40,21 +40,10 @@ define( 'WP_CACHE', true );
 /** The database collate type. Don't change this if in doubt. */
 // define( 'DB_COLLATE', '' );
 
-if ( file_exists( __DIR__ . '/wp-config.prod.php' ) ) {
-	$config = require __DIR__ . '/wp-config.prod.php';
-} else {
-	$config = [
-		'DB_NAME'     => getenv('DB_NAME'),
-		'DB_USER'     => getenv('DB_USER'),
-		'DB_PASSWORD' => getenv('DB_PASSWORD'),
-		'DB_HOST'     => getenv('DB_HOST'),
-	];
-}
-
-define( 'DB_NAME', $config['DB_NAME'] );
-define( 'DB_USER', $config['DB_USER'] );
-define( 'DB_PASSWORD', $config['DB_PASSWORD'] );
-define( 'DB_HOST', $config['DB_HOST'] );
+define( 'DB_NAME', getenv('DB_NAME') );
+define( 'DB_USER', getenv('DB_USER') );
+define( 'DB_PASSWORD', getenv('DB_PASSWORD') );
+define( 'DB_HOST', getenv('DB_HOST') );
 define( 'DB_CHARSET', 'utf8' );
 define( 'DB_COLLATE', '' );
 
