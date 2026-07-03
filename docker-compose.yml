@@ -2,8 +2,6 @@ services:
   db:
     image: mariadb:11
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -17,8 +15,6 @@ services:
     restart: unless-stopped
     depends_on:
       - db
-    env_file:
-      - .env
     ports:
       - "${WP_PORT}:80"
     environment:
@@ -34,8 +30,6 @@ services:
     restart: unless-stopped
     depends_on:
       - db
-    env_file:
-      - .env
     ports:
       - "${PMA_PORT}:80"
     environment:
@@ -47,8 +41,6 @@ services:
     image: wordpress:cli
     depends_on:
       - db
-    env_file:
-      - .env
     volumes:
       - .:/var/www/html
     environment:
