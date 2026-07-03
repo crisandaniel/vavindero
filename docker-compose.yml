@@ -39,6 +39,8 @@ services:
 
   wpcli:
     image: wordpress:cli
+    restart: "no"
+    command: ["tail", "-f", "/dev/null"]
     depends_on:
       - db
     volumes:
