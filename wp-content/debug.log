@@ -1,0 +1,11 @@
+[03-Jul-2026 05:24:45 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:24:45 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:27:34 UTC] PHP Notice:  Funcția as_next_scheduled_action a fost apelată <strong>incorect</strong>. as_next_scheduled_action() was called before the Action Scheduler data store was initialized Te rog vezi <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Depanare în WordPress</a> pentru mai multe informații. (Acest mesaj a fost adăugat în versiunea 3.1.6.) in /var/www/html/wp-includes/functions.php on line 6170
+[03-Jul-2026 05:29:02 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:29:02 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:29:17 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:29:17 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:30:38 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:30:38 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:30:53 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
+[03-Jul-2026 05:30:53 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): Connection refused in /var/www/html/wp-includes/class-wpdb.php on line 1988
