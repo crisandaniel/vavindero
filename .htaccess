@@ -1,3 +1,14 @@
+# BEGIN Infra file protection
+<IfModule mod_rewrite.c>
+RewriteEngine on
+RewriteRule ^docker-compose\.ya?ml$ - [F,L]
+RewriteRule ^docs/ - [F,L]
+RewriteRule ^db/ - [F,L]
+RewriteRule ^\.git/ - [F,L]
+RewriteRule ^wp-config\.prod\.php$ - [F,L]
+RewriteRule ^\.env - [F,L]
+</IfModule>
+# END Infra file protection
 # BEGIN LSCACHE
 ## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
 <IfModule mod_rewrite.c>
