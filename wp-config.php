@@ -105,13 +105,6 @@ define( 'COOKIEHASH', '98e8e5ab29158e6d25df6e509496ed3f' );
 define( 'WP_AUTO_UPDATE_CORE', 'minor' );
 
 define( 'WP_ALLOW_MULTISITE', true );
-define( 'MULTISITE', true );
-define( 'SUBDOMAIN_INSTALL', true );
-$base = '/';
-define( 'DOMAIN_CURRENT_SITE', 'vavinde.ro' );
-define( 'PATH_CURRENT_SITE', '/' );
-define( 'SITE_ID_CURRENT_SITE', 1 );
-define( 'BLOG_ID_CURRENT_SITE', 1 );
 
 /* That's all, stop editing! Happy publishing. */
 
