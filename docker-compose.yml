@@ -11,7 +11,9 @@ services:
       - db_data:/var/lib/mysql
 
   wordpress:
-    image: wordpress:php8.2-apache
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - db
@@ -23,7 +25,7 @@ services:
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - .:/var/www/html
+      - wp_uploads:/var/www/html/wp-content/uploads
 
   phpmyadmin:
     image: phpmyadmin:latest
@@ -38,13 +40,15 @@ services:
       PMA_PASSWORD: ${MYSQL_PASSWORD}
 
   wpcli:
-    image: wordpress:cli
+    build:
+      context: .
+      dockerfile: Dockerfile.cli
     restart: "no"
     command: ["tail", "-f", "/dev/null"]
     depends_on:
       - db
     volumes:
-      - .:/var/www/html
+      - wp_uploads:/var/www/html/wp-content/uploads
     environment:
       DB_HOST: db:3306
       DB_NAME: ${MYSQL_DATABASE}
@@ -53,3 +57,4 @@ services:
 
 volumes:
   db_data:
+  wp_uploads:

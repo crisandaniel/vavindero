@@ -1,0 +1,9 @@
+.git
+.env
+docs/
+docker-compose.yml
+docker-compose.override.yml
+Dockerfile
+db/
+wp-content/uploads/
+.superpowers/

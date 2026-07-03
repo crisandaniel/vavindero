@@ -1,0 +1,8 @@
+services:
+  wordpress:
+    volumes:
+      - .:/var/www/html
+
+  wpcli:
+    volumes:
+      - .:/var/www/html
