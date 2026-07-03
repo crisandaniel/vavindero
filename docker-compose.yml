@@ -28,7 +28,7 @@ services:
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - ./web:/var/www/html
+      - .:/var/www/html
 
   phpmyadmin:
     image: phpmyadmin:latest
@@ -51,7 +51,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./web:/var/www/html
+      - .:/var/www/html
     environment:
       DB_HOST: db:3306
       DB_NAME: ${MYSQL_DATABASE}
