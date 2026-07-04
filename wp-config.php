@@ -1,4 +1,14 @@
 <?php
+/*
+ * Traefik terminates SSL and forwards requests to this container over
+ * plain HTTP. Without this, is_ssl() returns false and WordPress
+ * generates http:// URLs on an https:// site, causing the browser to
+ * block them as mixed content.
+ */
+if ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' ) {
+	$_SERVER['HTTPS'] = 'on';
+}
+
 define( 'WP_CACHE', true );
 
 /**
