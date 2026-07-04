@@ -93,6 +93,7 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 
 	private function build_order_message( $order ) {
 		$lines   = array();
+		$lines[] = '===============';
 		$lines[] = '*Comandă nouă #' . $order->get_order_number() . '*';
 		$lines[] = '';
 		$lines[] = 'Client: ' . $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
@@ -111,6 +112,7 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 
 		$lines[] = '';
 		$lines[] = 'Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' RON';
+		$lines[] = '===============';
 
 		return implode( "\n", $lines );
 	}
