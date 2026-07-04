@@ -53,4 +53,22 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 			),
 		);
 	}
+
+	public function process_payment( $order_id ) {
+		$order = wc_get_order( $order_id );
+
+		$order->update_status( 'on-hold', 'Comandă plasată prin WhatsApp, în așteptarea confirmării vânzătorului.' );
+		wc_reduce_stock_levels( $order_id );
+
+		WC()->cart->empty_cart();
+
+		$whatsapp_number = preg_replace( '/[^0-9]/', '', $this->get_option( 'whatsapp_number' ) );
+		$message         = 'Comandă nouă #' . $order->get_order_number();
+		$wa_me_url       = 'https://wa.me/' . $whatsapp_number . '?text=' . rawurlencode( $message );
+
+		return array(
+			'result'   => 'success',
+			'redirect' => $wa_me_url,
+		);
+	}
 }
