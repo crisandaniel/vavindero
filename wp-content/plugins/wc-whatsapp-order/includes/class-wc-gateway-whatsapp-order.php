@@ -62,27 +62,36 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 
 		WC()->cart->empty_cart();
 
-		$whatsapp_number = preg_replace( '/[^0-9]/', '', $this->get_option( 'whatsapp_number' ) );
-		$message         = $this->build_order_message( $order );
-		$wa_me_url       = 'https://wa.me/' . $whatsapp_number . '?text=' . rawurlencode( $message );
+		/*
+		 * Returning the full wa.me URL (with the multi-line message)
+		 * directly here doesn't survive intact: WooCommerce's block-based
+		 * Checkout (Store API) serializes this "redirect" value through a
+		 * schema-validated JSON response, which strips %0a/%0d sequences
+		 * from it - confirmed by testing wa.me's own redirect directly
+		 * (it preserves %0a perfectly) versus calling process_payment()
+		 * through the real checkout flow (the %0a vanishes with no
+		 * trace). So instead we redirect to our own small handler below,
+		 * which does a raw wp_redirect() - a plain HTTP Location header,
+		 * not a JSON response field - straight to wa.me. That one extra,
+		 * instant hop is what actually reaches WhatsApp with the message
+		 * intact.
+		 */
+		$order->update_meta_data( '_whatsapp_order_message', $this->build_order_message( $order ) );
+		$order->save();
 
 		return array(
 			'result'   => 'success',
-			'redirect' => $wa_me_url,
+			'redirect' => add_query_arg(
+				array(
+					'wc_whatsapp_order' => $order_id,
+					'key'               => $order->get_order_key(),
+				),
+				home_url( '/' )
+			),
 		);
 	}
 
 	private function build_order_message( $order ) {
-		/*
-		 * Pictographic emoji (🛒👤📞📍 etc.) are 4-byte UTF-8 characters
-		 * (outside the Basic Multilingual Plane). WhatsApp's own wa.me ->
-		 * api.whatsapp.com redirect corrupts those into U+FFFD when they
-		 * arrive via a percent-encoded query string (confirmed by
-		 * inspecting the actual redirected URL - Romanian diacritics,
-		 * which are only 2 bytes, survived intact, only the 4-byte emoji
-		 * were replaced). The symbols below (★ ☎ ➤ •) are all 3-byte
-		 * BMP characters and are not affected.
-		 */
 		$lines   = array();
 		$lines[] = '*Comandă nouă #' . $order->get_order_number() . '*';
 		$lines[] = '';
