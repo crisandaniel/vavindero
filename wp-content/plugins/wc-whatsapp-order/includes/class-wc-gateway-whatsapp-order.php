@@ -84,24 +84,24 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 		 * BMP characters and are not affected.
 		 */
 		$lines   = array();
-		$lines[] = '★ *Comandă nouă #' . $order->get_order_number() . '*';
+		$lines[] = '*Comandă nouă #' . $order->get_order_number() . '*';
 		$lines[] = '';
 		$lines[] = 'Client: ' . $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
-		$lines[] = '☎ Telefon: ' . $order->get_billing_phone();
+		$lines[] = 'Telefon: ' . $order->get_billing_phone();
 
 		$address_1 = $order->get_shipping_address_1() ?: $order->get_billing_address_1();
 		$city      = $order->get_shipping_city() ?: $order->get_billing_city();
 		$postcode  = $order->get_shipping_postcode() ?: $order->get_billing_postcode();
-		$lines[]   = '➤ Adresă livrare: ' . trim( $address_1 . ', ' . $city . ', ' . $postcode, ', ' );
+		$lines[]   = 'Adresă livrare: ' . trim( $address_1 . ', ' . $city . ', ' . $postcode, ', ' );
 		$lines[]   = '';
-		$lines[]   = '★ Produse:';
+		$lines[]   = 'Produse:';
 
 		foreach ( $order->get_items() as $item ) {
-			$lines[] = '• ' . $item->get_quantity() . ' x ' . $item->get_name() . ' — ' . wc_format_decimal( $item->get_total(), 2 ) . ' RON';
+			$lines[] = '- ' . $item->get_quantity() . ' x ' . $item->get_name() . ' — ' . wc_format_decimal( $item->get_total(), 2 ) . ' RON';
 		}
 
 		$lines[] = '';
-		$lines[] = '➤ Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' RON';
+		$lines[] = 'Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' RON';
 
 		return implode( "\n", $lines );
 	}
