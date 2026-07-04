@@ -64,18 +64,7 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 
 		$whatsapp_number = preg_replace( '/[^0-9]/', '', $this->get_option( 'whatsapp_number' ) );
 		$message         = $this->build_order_message( $order );
-
-		/*
-		 * WordPress's esc_url() strips %0d/%0a sequences from URLs (a
-		 * CRLF-injection safeguard) - if it runs anywhere on this redirect
-		 * URL (WooCommerce's Blocks/Store API does this on redirect URLs),
-		 * literal newlines encoded as %0A get silently deleted, collapsing
-		 * the message onto one line. Encoding the newline's "%0A" itself
-		 * (giving "%250A" once rawurlencode() runs) survives that
-		 * stripping; WhatsApp still decodes it back to a real line break.
-		 */
-		$message   = str_replace( "\n", '%0A', $message );
-		$wa_me_url = 'https://wa.me/' . $whatsapp_number . '?text=' . rawurlencode( $message );
+		$wa_me_url       = 'https://wa.me/' . $whatsapp_number . '?text=' . rawurlencode( $message );
 
 		return array(
 			'result'   => 'success',
@@ -84,25 +73,35 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 	}
 
 	private function build_order_message( $order ) {
+		/*
+		 * Pictographic emoji (🛒👤📞📍 etc.) are 4-byte UTF-8 characters
+		 * (outside the Basic Multilingual Plane). WhatsApp's own wa.me ->
+		 * api.whatsapp.com redirect corrupts those into U+FFFD when they
+		 * arrive via a percent-encoded query string (confirmed by
+		 * inspecting the actual redirected URL - Romanian diacritics,
+		 * which are only 2 bytes, survived intact, only the 4-byte emoji
+		 * were replaced). The symbols below (★ ☎ ➤ •) are all 3-byte
+		 * BMP characters and are not affected.
+		 */
 		$lines   = array();
-		$lines[] = '🛒 *Comandă nouă #' . $order->get_order_number() . '*';
+		$lines[] = '★ *Comandă nouă #' . $order->get_order_number() . '*';
 		$lines[] = '';
-		$lines[] = '👤 Client: ' . $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
-		$lines[] = '📞 Telefon: ' . $order->get_billing_phone();
+		$lines[] = 'Client: ' . $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
+		$lines[] = '☎ Telefon: ' . $order->get_billing_phone();
 
 		$address_1 = $order->get_shipping_address_1() ?: $order->get_billing_address_1();
 		$city      = $order->get_shipping_city() ?: $order->get_billing_city();
 		$postcode  = $order->get_shipping_postcode() ?: $order->get_billing_postcode();
-		$lines[]   = '📍 Adresă livrare: ' . trim( $address_1 . ', ' . $city . ', ' . $postcode, ', ' );
+		$lines[]   = '➤ Adresă livrare: ' . trim( $address_1 . ', ' . $city . ', ' . $postcode, ', ' );
 		$lines[]   = '';
-		$lines[]   = '🛍️ Produse:';
+		$lines[]   = '★ Produse:';
 
 		foreach ( $order->get_items() as $item ) {
 			$lines[] = '• ' . $item->get_quantity() . ' x ' . $item->get_name() . ' — ' . wc_format_decimal( $item->get_total(), 2 ) . ' RON';
 		}
 
 		$lines[] = '';
-		$lines[] = '💰 Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' RON';
+		$lines[] = '➤ Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' RON';
 
 		return implode( "\n", $lines );
 	}
