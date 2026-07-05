@@ -93,18 +93,24 @@ function vavinde_restrict_appearance( $allcaps, $caps ) {
  * manage_network_plugins in addition to activate_plugins on multisite
  * (see the 'activate_plugins' case in map_meta_cap()) - a Network Admin
  * capability that would also unlock the Network Admin Plugins screen
- * (affecting every site), so we never grant it. Instead, for pro-tier
- * sites, drop that extra requirement from the capability check itself,
- * leaving only 'activate_plugins' - which the site's own administrator
- * role already has by default. This only affects (de)activation on the
- * site's own wp-admin/plugins.php; Network Admin's screen checks
+ * (affecting every site), so we never grant it. Instead, drop that extra
+ * requirement from the capability check itself, leaving only
+ * 'activate_plugins' - which the site's own administrator role already has
+ * by default. This only affects (de)activation on the site's own
+ * wp-admin/plugins.php; Network Admin's screen checks
  * manage_network_plugins directly and is unaffected.
+ *
+ * Applies to every tier, not just pro: whatever Daniel installs (without
+ * network-activating) is by definition vetted for any site to toggle on
+ * itself - most importantly, payment method plugins (Stripe, NETOPIA),
+ * which every owner needs to be able to pick alongside WhatsApp Order
+ * regardless of tier, same reasoning as leaving Payments open to everyone.
  */
-add_filter( 'map_meta_cap', 'vavinde_allow_activate_plugins_on_pro_tier', 10, 2 );
-function vavinde_allow_activate_plugins_on_pro_tier( $caps, $cap ) {
+add_filter( 'map_meta_cap', 'vavinde_allow_activate_plugins', 10, 2 );
+function vavinde_allow_activate_plugins( $caps, $cap ) {
 	$plugin_activation_caps = array( 'activate_plugins', 'deactivate_plugins', 'activate_plugin', 'deactivate_plugin' );
 
-	if ( ! in_array( $cap, $plugin_activation_caps, true ) || vavinde_is_basic_tier() ) {
+	if ( ! in_array( $cap, $plugin_activation_caps, true ) ) {
 		return $caps;
 	}
 
@@ -139,6 +145,20 @@ add_action( 'admin_menu', 'vavinde_hide_reviews_submenu_on_basic_tier', 999 );
 function vavinde_hide_reviews_submenu_on_basic_tier() {
 	if ( vavinde_is_basic_tier() ) {
 		remove_submenu_page( 'edit.php?post_type=product', 'product-reviews' );
+	}
+}
+
+/**
+ * The core "Comments" menu moderates both post comments and product
+ * reviews - on basic tier neither can ever have anything in it (Add
+ * Post is blocked, reviews are disabled), so it's just clutter. Left
+ * alone on pro tier, where reviews are enabled and posts can exist, so
+ * there's real content to moderate.
+ */
+add_action( 'admin_menu', 'vavinde_hide_comments_menu_on_basic_tier', 999 );
+function vavinde_hide_comments_menu_on_basic_tier() {
+	if ( vavinde_is_basic_tier() ) {
+		remove_menu_page( 'edit-comments.php' );
 	}
 }
 
