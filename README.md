@@ -1,5 +1,27 @@
 # vavinde.ro
 
+## Unde rulezi comenzile `wp`
+
+**Local (Docker Compose, pe Mac):** din rădăcina proiectului, prin
+serviciul `wpcli` din `docker-compose.yml`:
+
+```bash
+docker compose exec -T wpcli wp <comanda> --url=<subdomeniu>.lvh.me
+```
+
+**Producție (Hetzner, prin Coolify):** SSH pe server, apoi găsești
+containerul `wpcli` al stack-ului `vavindero` și rulezi comanda direct
+în el:
+
+```bash
+docker ps --filter name=wpcli   # gasesti ID-ul/numele containerului
+docker exec <container> wp <comanda> --url=<subdomeniu>.vavinde.ro
+```
+
+Comenzile de mai jos folosesc doar `wp <comanda> --url=...` — completează
+tu prefixul potrivit (`docker compose exec -T wpcli` local, `docker exec
+<container>` în producție) după mediul în care lucrezi.
+
 ## Tier-ul unui site (basic / pro)
 
 Fiecare subdomeniu din rețea are un tier — `basic` (implicit) sau `pro` —
