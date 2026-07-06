@@ -151,7 +151,10 @@ function vavinde_render_storefront_header() {
 	<header class="vavinde-header">
 		<div class="vavinde-header__row">
 			<a class="vavinde-header__brand" href="<?php echo esc_url( home_url( '/' ) ); ?>">
-				<?php echo esc_html( get_bloginfo( 'name' ) ); ?>
+				<span class="vavinde-header__brand-name"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></span>
+				<?php if ( get_bloginfo( 'description' ) ) : ?>
+					<span class="vavinde-header__brand-tagline"><?php echo esc_html( get_bloginfo( 'description' ) ); ?></span>
+				<?php endif; ?>
 			</a>
 			<button type="button" class="vavinde-header__toggle" aria-expanded="false" aria-controls="vavinde-header-nav">
 				<span aria-hidden="true">&#9776;</span>
@@ -324,8 +327,16 @@ function vavinde_storefront_styles() {
 			padding: 1rem 1.5rem;
 		}
 		.vavinde-header__brand {
-			font-weight: 600;
+			display: flex;
+			flex-direction: column;
 			text-decoration: none;
+		}
+		.vavinde-header__brand-name {
+			font-weight: 600;
+		}
+		.vavinde-header__brand-tagline {
+			font-size: 0.8rem;
+			opacity: 0.7;
 		}
 		.vavinde-header__toggle {
 			display: none;
