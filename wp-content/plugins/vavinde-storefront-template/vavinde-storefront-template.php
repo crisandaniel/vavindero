@@ -29,14 +29,22 @@ function vavinde_storefront_chrome_enabled() {
  * list - forced via pre_option so it can't drift per-site regardless of
  * what's stored in Reading Settings (applies to every tier; this is a
  * structural template requirement, not a paid-tier feature).
+ *
+ * Excludes the network's main site (vavinde.ro itself) - that's the
+ * business/presentation landing page, not a shop, and manages its own
+ * front page setting normally.
  */
 add_filter( 'pre_option_show_on_front', 'vavinde_force_shop_as_homepage' );
-function vavinde_force_shop_as_homepage() {
-	return 'page';
+function vavinde_force_shop_as_homepage( $value ) {
+	return is_main_site() ? $value : 'page';
 }
 
 add_filter( 'pre_option_page_on_front', 'vavinde_force_shop_page_as_front_page' );
 function vavinde_force_shop_page_as_front_page( $value ) {
+	if ( is_main_site() ) {
+		return $value;
+	}
+
 	$shop_page_id = (int) get_option( 'woocommerce_shop_page_id' );
 
 	return $shop_page_id ? $shop_page_id : $value;
