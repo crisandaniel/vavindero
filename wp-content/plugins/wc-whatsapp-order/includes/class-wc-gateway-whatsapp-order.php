@@ -111,6 +111,11 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 		}
 
 		$lines[] = '';
+
+		if ( $order->get_shipping_total() > 0 ) {
+			$lines[] = 'Transport: ' . wc_format_decimal( $order->get_shipping_total(), 2 ) . ' RON';
+		}
+
 		$lines[] = 'Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' RON';
 		$lines[] = '===============';
 
