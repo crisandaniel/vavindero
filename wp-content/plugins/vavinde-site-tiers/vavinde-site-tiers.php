@@ -163,6 +163,19 @@ function vavinde_hide_comments_menu_on_basic_tier() {
 }
 
 /**
+ * The homepage is the shop, not a blog - Posts has no role in this
+ * business model, and Add Post is already blocked on basic tier anyway.
+ * Left alone on pro tier, where content-marketing/SEO blogging is a
+ * legitimate reason to unlock full access.
+ */
+add_action( 'admin_menu', 'vavinde_hide_posts_menu_on_basic_tier', 999 );
+function vavinde_hide_posts_menu_on_basic_tier() {
+	if ( vavinde_is_basic_tier() ) {
+		remove_menu_page( 'edit.php' );
+	}
+}
+
+/**
  * Analytics and Marketing gate on 'manage_woocommerce' - the same
  * capability Products/Orders use - so they can't be blocked by revoking a
  * capability without also breaking product/order management. Payments is
@@ -226,6 +239,22 @@ function vavinde_block_hidden_woocommerce_pages_on_basic_tier() {
 }
 
 /**
+ * The social networks offered on "Setările magazinului meu", each stored
+ * as its own vavinde_social_{network} option. Also read by
+ * vavinde-storefront-template's footer - duplicated there rather than
+ * shared, to avoid a load-order dependency between the two plugins.
+ */
+define(
+	'VAVINDE_SOCIAL_NETWORKS',
+	array(
+		'facebook'  => 'Facebook',
+		'instagram' => 'Instagram',
+		'tiktok'    => 'TikTok',
+		'x'         => 'X (Twitter)',
+	)
+);
+
+/**
  * A minimal, standalone shortcut for the one setting every owner needs
  * most often - their WhatsApp number and whether WhatsApp Order is
  * enabled - without navigating the full Payments screen. Reads/writes the
@@ -257,6 +286,12 @@ function vavinde_render_store_settings_page() {
 		$settings['whatsapp_number'] = sanitize_text_field( wp_unslash( $_POST['vavinde_whatsapp_number'] ) );
 		$settings['enabled']         = isset( $_POST['vavinde_whatsapp_enabled'] ) ? 'yes' : 'no';
 		update_option( $option_name, $settings );
+
+		foreach ( VAVINDE_SOCIAL_NETWORKS as $network => $label ) {
+			$field_name = 'vavinde_social_' . $network;
+			update_option( $field_name, isset( $_POST[ $field_name ] ) ? sanitize_url( wp_unslash( $_POST[ $field_name ] ) ) : '' );
+		}
+
 		echo '<div class="notice notice-success"><p>' . esc_html__( 'Salvat.', 'vavinde' ) . '</p></div>';
 	}
 
@@ -290,6 +325,16 @@ function vavinde_render_store_settings_page() {
 						</p>
 					</td>
 				</tr>
+				<?php foreach ( VAVINDE_SOCIAL_NETWORKS as $network => $label ) : ?>
+					<tr>
+						<th scope="row">
+							<label for="vavinde_social_<?php echo esc_attr( $network ); ?>"><?php echo esc_html( $label ); ?></label>
+						</th>
+						<td>
+							<input type="url" id="vavinde_social_<?php echo esc_attr( $network ); ?>" name="vavinde_social_<?php echo esc_attr( $network ); ?>" value="<?php echo esc_attr( get_option( 'vavinde_social_' . $network, '' ) ); ?>" class="regular-text" placeholder="https://<?php echo esc_attr( $network ); ?>.com/..." />
+						</td>
+					</tr>
+				<?php endforeach; ?>
 			</table>
 			<?php submit_button(); ?>
 		</form>
