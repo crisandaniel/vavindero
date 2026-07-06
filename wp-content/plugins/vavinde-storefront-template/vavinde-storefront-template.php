@@ -8,6 +8,23 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Whether the custom header/footer chrome (this plugin's own markup,
+ * hiding CSS, and related scripts) should render at all. Basic-tier
+ * shops keep it, since they can't touch Appearance to build their own.
+ * Pro-tier shops get nothing from us here - they're expected to build
+ * their own header/footer in Site Editor, same as any WordPress site.
+ *
+ * Deliberately checks the site's own tier directly (vavinde_site_tier(),
+ * not vavinde_is_basic_tier()) rather than deferring to the
+ * super-admin-always-exempt pattern used for capability checks elsewhere
+ * - this decides what a real visitor sees on the frontend, which must not
+ * change depending on who happens to be logged in while looking at it.
+ */
+function vavinde_storefront_chrome_enabled() {
+	return function_exists( 'vavinde_site_tier' ) && 'basic' === vavinde_site_tier();
+}
+
+/**
  * Every shop's homepage is its WooCommerce shop archive, not a blog post
  * list - forced via pre_option so it can't drift per-site regardless of
  * what's stored in Reading Settings (applies to every tier; this is a
@@ -123,6 +140,30 @@ function vavinde_delete_default_sample_page() {
 }
 
 /**
+ * Add-to-cart on the shop/product pages happens over AJAX, without a page
+ * reload - our header is only rendered once, at page load, so the count
+ * would otherwise stay stale until the next navigation. WooCommerce's own
+ * cart-fragments script (already loaded on every frontend page) swaps out
+ * any element matching a registered selector after every AJAX cart
+ * change - registering our count span here is what keeps it live.
+ */
+function vavinde_cart_count_markup( $cart_count ) {
+	return sprintf(
+		'<span class="vavinde-header__cart-count">(%d)</span>',
+		(int) $cart_count
+	);
+}
+
+add_filter( 'woocommerce_add_to_cart_fragments', 'vavinde_cart_count_fragment' );
+function vavinde_cart_count_fragment( $fragments ) {
+	$cart_count = ( WC()->cart ) ? WC()->cart->get_cart_contents_count() : 0;
+
+	$fragments['.vavinde-header__cart-count'] = vavinde_cart_count_markup( $cart_count );
+
+	return $fragments;
+}
+
+/**
  * The standard header: brand (the site's own Site Title, e.g. "Ovidiu" -
  * not the raw subdomain, so it reads as a real producer name rather than
  * a technical hostname), nav (Despre noi / Magazin / Plată și livrare),
@@ -135,7 +176,7 @@ function vavinde_delete_default_sample_page() {
  */
 add_action( 'wp_body_open', 'vavinde_render_storefront_header' );
 function vavinde_render_storefront_header() {
-	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) ) {
+	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) || ! vavinde_storefront_chrome_enabled() ) {
 		return;
 	}
 
@@ -147,6 +188,7 @@ function vavinde_render_storefront_header() {
 
 	$whatsapp_settings = get_option( 'woocommerce_whatsapp_order_settings', array() );
 	$whatsapp_number   = isset( $whatsapp_settings['whatsapp_number'] ) ? preg_replace( '/\D/', '', $whatsapp_settings['whatsapp_number'] ) : '';
+	$social_links      = vavinde_get_social_links();
 	?>
 	<header class="vavinde-header">
 		<div class="vavinde-header__row">
@@ -168,14 +210,14 @@ function vavinde_render_storefront_header() {
 				<?php if ( $shipping_url ) : ?>
 					<a href="<?php echo esc_url( $shipping_url ); ?>"><?php esc_html_e( 'Plată și livrare', 'vavinde' ); ?></a>
 				<?php endif; ?>
+				<?php foreach ( $social_links as $network => $social_link ) : ?>
+					<a class="vavinde-header__social" href="<?php echo esc_url( $social_link['url'] ); ?>" target="_blank" rel="noopener" aria-label="<?php echo esc_attr( $social_link['label'] ); ?>">
+						<?php echo vavinde_social_icon_svg( $network ); // phpcs:ignore -- fixed inline SVG markup, not user input. ?>
+					</a>
+				<?php endforeach; ?>
 				<a class="vavinde-header__cart" href="<?php echo esc_url( $cart_url ); ?>">
-					<?php
-					printf(
-						/* translators: %d: number of items in the cart. */
-						esc_html__( 'Coș (%d)', 'vavinde' ),
-						(int) $cart_count
-					);
-					?>
+					<?php esc_html_e( 'Coș', 'vavinde' ); ?>
+					<?php echo vavinde_cart_count_markup( $cart_count ); // phpcs:ignore -- fixed markup, values already escaped inside. ?>
 				</a>
 			</nav>
 		</div>
@@ -239,18 +281,13 @@ function vavinde_social_icon_svg( $network ) {
 }
 
 /**
- * The standard footer: extra page links, social links (if the owner
- * filled them in via "Setările magazinului meu"), and copyright. No link
- * to the main site's disclaimer page yet - that page doesn't exist until
- * the vavinde.ro landing page subproject is built.
+ * The social links the owner has filled in via "Setările magazinului
+ * meu", keyed by network - shared between the header and footer so both
+ * show exactly the ones that are actually set. Duplicates
+ * vavinde-site-tiers' VAVINDE_SOCIAL_NETWORKS list to avoid a load-order
+ * dependency between the two plugins.
  */
-add_action( 'wp_footer', 'vavinde_render_storefront_footer' );
-function vavinde_render_storefront_footer() {
-	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) ) {
-		return;
-	}
-
-	// Duplicated from vavinde-site-tiers' VAVINDE_SOCIAL_NETWORKS to avoid a load-order dependency between the two plugins.
+function vavinde_get_social_links() {
 	$social_networks = array(
 		'facebook'  => 'Facebook',
 		'instagram' => 'Instagram',
@@ -269,7 +306,23 @@ function vavinde_render_storefront_footer() {
 		}
 	}
 
-	$extra_pages = vavinde_get_extra_footer_pages();
+	return $social_links;
+}
+
+/**
+ * The standard footer: extra page links, social links (if the owner
+ * filled them in via "Setările magazinului meu"), and copyright. No link
+ * to the main site's disclaimer page yet - that page doesn't exist until
+ * the vavinde.ro landing page subproject is built.
+ */
+add_action( 'wp_footer', 'vavinde_render_storefront_footer' );
+function vavinde_render_storefront_footer() {
+	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) || ! vavinde_storefront_chrome_enabled() ) {
+		return;
+	}
+
+	$social_links = vavinde_get_social_links();
+	$extra_pages  = vavinde_get_extra_footer_pages();
 	?>
 	<footer class="vavinde-footer">
 		<div class="vavinde-footer__row">
@@ -309,7 +362,7 @@ function vavinde_render_storefront_footer() {
  */
 add_action( 'wp_head', 'vavinde_storefront_styles' );
 function vavinde_storefront_styles() {
-	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) ) {
+	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) || ! vavinde_storefront_chrome_enabled() ) {
 		return;
 	}
 	?>
@@ -353,6 +406,10 @@ function vavinde_storefront_styles() {
 			align-items: center;
 			flex-wrap: wrap;
 			gap: 1.25rem;
+		}
+		.vavinde-header__social {
+			display: inline-flex;
+			color: currentColor;
 		}
 		.vavinde-whatsapp-float {
 			position: fixed;
@@ -400,7 +457,7 @@ function vavinde_storefront_styles() {
  */
 add_action( 'wp_footer', 'vavinde_storefront_mobile_menu_script' );
 function vavinde_storefront_mobile_menu_script() {
-	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) ) {
+	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) || ! vavinde_storefront_chrome_enabled() ) {
 		return;
 	}
 	?>
@@ -415,6 +472,43 @@ function vavinde_storefront_mobile_menu_script() {
 			var isOpen = nav.classList.toggle( 'is-open' );
 			toggle.setAttribute( 'aria-expanded', isOpen ? 'true' : 'false' );
 		} );
+	})();
+	</script>
+	<?php
+}
+
+/**
+ * The shop page's Add to Cart buttons are WooCommerce Blocks (class
+ * wc-interactive), which add/remove items via the Store API directly -
+ * they never go through admin-ajax.php, so the classic
+ * woocommerce_add_to_cart_fragments filter (see
+ * vavinde_cart_count_fragment() above) never fires for them. WooCommerce
+ * Blocks does dispatch wc-blocks_added_to_cart/wc-blocks_removed_from_cart
+ * on document.body for exactly this kind of integration - listen for
+ * those and re-fetch the count from the Store API instead.
+ */
+add_action( 'wp_footer', 'vavinde_storefront_cart_count_sync_script' );
+function vavinde_storefront_cart_count_sync_script() {
+	if ( is_admin() || ! function_exists( 'wc_get_page_permalink' ) || ! vavinde_storefront_chrome_enabled() ) {
+		return;
+	}
+	?>
+	<script>
+	(function () {
+		var countEl = document.querySelector( '.vavinde-header__cart-count' );
+		if ( ! countEl ) {
+			return;
+		}
+		function refreshCartCount() {
+			fetch( '<?php echo esc_js( rest_url( 'wc/store/v1/cart' ) ); ?>', { credentials: 'same-origin' } )
+				.then( function ( response ) { return response.json(); } )
+				.then( function ( cart ) {
+					countEl.textContent = '(' + ( cart.items_count || 0 ) + ')';
+				} )
+				.catch( function () {} );
+		}
+		document.body.addEventListener( 'wc-blocks_added_to_cart', refreshCartCount );
+		document.body.addEventListener( 'wc-blocks_removed_from_cart', refreshCartCount );
 	})();
 	</script>
 	<?php
