@@ -1,2 +1,2 @@
 FROM wordpress:php8.2-apache
-COPY . /var/www/html/
+COPY --chown=www-data:www-data . /var/www/html/
