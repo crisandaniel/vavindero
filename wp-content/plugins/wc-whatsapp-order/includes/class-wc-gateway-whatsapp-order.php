@@ -92,6 +92,8 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 	}
 
 	private function build_order_message( $order ) {
+		$currency = $order->get_currency();
+
 		$lines   = array();
 		$lines[] = '===============';
 		$lines[] = '*Comandă nouă #' . $order->get_order_number() . '*';
@@ -107,16 +109,16 @@ class WC_Gateway_WhatsApp_Order extends WC_Payment_Gateway {
 		$lines[]   = 'Produse:';
 
 		foreach ( $order->get_items() as $item ) {
-			$lines[] = '- ' . $item->get_quantity() . ' x ' . $item->get_name() . ' — ' . wc_format_decimal( $item->get_total(), 2 ) . ' RON';
+			$lines[] = '- ' . $item->get_quantity() . ' x ' . $item->get_name() . ' — ' . wc_format_decimal( $item->get_total(), 2 ) . ' ' . $currency;
 		}
 
 		$lines[] = '';
 
 		if ( $order->get_shipping_total() > 0 ) {
-			$lines[] = 'Transport: ' . wc_format_decimal( $order->get_shipping_total(), 2 ) . ' RON';
+			$lines[] = 'Transport: ' . wc_format_decimal( $order->get_shipping_total(), 2 ) . ' ' . $currency;
 		}
 
-		$lines[] = 'Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' RON';
+		$lines[] = 'Total: ' . wc_format_decimal( $order->get_total(), 2 ) . ' ' . $currency;
 		$lines[] = '===============';
 
 		return implode( "\n", $lines );
