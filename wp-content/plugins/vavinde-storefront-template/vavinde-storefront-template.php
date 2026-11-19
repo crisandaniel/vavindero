@@ -67,6 +67,79 @@ function vavinde_force_no_buyer_accounts() {
 }
 
 /**
+ * Shipping cost: hidden until the buyer picks a country, then updated
+ * immediately on every country change (not only after postcode/city).
+ *
+ * - No default customer location: otherwise WooCommerce assumes the
+ *   shop's base country (RO) and shows that rate to everyone upfront.
+ * - "Hide shipping costs until an address is entered" is forced OFF on
+ *   purpose: in the Checkout block it waits for a *full* address
+ *   (country + city + postcode, see WC_Customer::has_full_shipping_address()),
+ *   which is exactly the delay we don't want. The country-only gate is
+ *   done by vavinde_hide_shipping_rates_without_country() instead.
+ */
+add_filter( 'pre_option_woocommerce_default_customer_address', 'vavinde_force_no_default_customer_location' );
+function vavinde_force_no_default_customer_location() {
+	return '';
+}
+
+add_filter( 'pre_option_woocommerce_shipping_cost_requires_address', 'vavinde_force_shipping_cost_not_requiring_full_address' );
+function vavinde_force_shipping_cost_not_requiring_full_address() {
+	return 'no';
+}
+
+add_filter( 'woocommerce_package_rates', 'vavinde_hide_shipping_rates_without_country', 100, 2 );
+function vavinde_hide_shipping_rates_without_country( $rates, $package ) {
+	return empty( $package['destination']['country'] ) ? array() : $rates;
+}
+
+/**
+ * The Checkout block only pushes an address change to the server once
+ * none of the changed fields has a validation error - and a country
+ * change also clears postcode/state, so the (required) empty postcode
+ * blocks the push until the buyer re-types it. Push the country on its
+ * own as soon as it changes, so rates/totals refresh right away.
+ */
+add_action( 'wp_enqueue_scripts', 'vavinde_checkout_push_country_change_script' );
+function vavinde_checkout_push_country_change_script() {
+	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+		return;
+	}
+
+	wp_add_inline_script(
+		'wc-blocks-data-store',
+		"( function () {
+			var data = window.wp && window.wp.data;
+			if ( ! data ) {
+				return;
+			}
+			var STORE = 'wc/store/cart';
+			var lastCountry;
+			data.subscribe( function () {
+				var cart = data.select( STORE );
+				if ( ! cart || ! cart.hasFinishedResolution( 'getCartData' ) ) {
+					return;
+				}
+				var address = cart.getCustomerData().shippingAddress;
+				if ( lastCountry === undefined ) {
+					lastCountry = address.country;
+					return;
+				}
+				if ( address.country === lastCountry ) {
+					return;
+				}
+				lastCountry = address.country;
+				data.dispatch( STORE ).updateCustomerData(
+					{ shipping_address: Object.assign( {}, address, { state: '', postcode: '' } ) },
+					true,
+					true
+				).catch( function () {} );
+			}, STORE );
+		} )();"
+	);
+}
+
+/**
  * Every shop gets the same two standard pages ("Despre noi", "Plată și
  * livrare"), created once per site with placeholder content the owner is
  * expected to fill in. The created page's ID is tracked in its own
